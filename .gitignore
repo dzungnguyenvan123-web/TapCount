@@ -1,0 +1,8 @@
+.DS_Store
+.build/
+.swiftpm/
+TapCount.app/
+Icon.iconset/
+Icon.icns
+*.xcodeproj
+xcuserdata/
