@@ -7,6 +7,8 @@ struct MenuBarPopoverView: View {
     let uiState: AppUIState
     let onOpenMainWindow: () -> Void
 
+    @Environment(\.openSettings) private var openSettings
+    @State private var cadenceFilter: MainWindowView.CadenceFilter = .all
     @State private var showQuickAdd = false
     @State private var quickName = ""
     @State private var quickCadence: ResetCadence = .daily
@@ -14,6 +16,14 @@ struct MenuBarPopoverView: View {
     @State private var quickColor: TaskColor = .blue
     @State private var quickIcon: String = "checkmark.circle.fill"
     @FocusState private var quickNameFocused: Bool
+
+    private var filteredTasks: [CountTask] {
+        store.tasks.filter { cadenceFilter.matches($0.resetCadence) }
+    }
+
+    private var hasMultipleCadences: Bool {
+        Set(store.tasks.map(\.resetCadence)).count > 1
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -56,7 +66,25 @@ struct MenuBarPopoverView: View {
                 Divider()
             }
 
+            // Cadence filter bar (shown whenever tasks exist so user can filter by schedule)
+            if !store.tasks.isEmpty && (hasMultipleCadences || cadenceFilter != .all) {
+                Picker("Filter", selection: $cadenceFilter) {
+                    ForEach(MainWindowView.CadenceFilter.allCases) { filter in
+                        Text(filter.rawValue).tag(filter)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .controlSize(.small)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+
+                Divider()
+            }
+
             // Task List
+            // Note: MenuBarExtra(.window) collapses bare ScrollView(maxHeight:) to 0 height on first open.
+            // Render a plain VStack for <= 6 items (exact intrinsic height) and an explicit-height ScrollView for > 6.
             if store.tasks.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "hand.tap")
@@ -74,27 +102,26 @@ struct MenuBarPopoverView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
+            } else if filteredTasks.isEmpty {
+                VStack(spacing: 6) {
+                    Text("No \(cadenceFilter.rawValue.lowercased()) tasks")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    Button("Show All") {
+                        cadenceFilter = .all
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.caption.weight(.semibold))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+            } else if filteredTasks.count <= 6 {
+                taskRowsStack
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 6) {
-                        ForEach(store.tasks) { task in
-                            MenuBarTaskRow(
-                                task: task,
-                                count: store.currentCount(for: task),
-                                progress: store.progress(for: task),
-                                isGoalMet: store.isGoalMet(for: task),
-                                onTap: {
-                                    store.tap(taskID: task.id)
-                                },
-                                onDecrement: {
-                                    store.decrement(taskID: task.id)
-                                }
-                            )
-                        }
-                    }
-                    .padding(10)
+                    taskRowsStack
                 }
-                .frame(maxHeight: 340)
+                .frame(height: 340)
             }
 
             // Compact Undo Strip
@@ -146,6 +173,17 @@ struct MenuBarPopoverView: View {
                 )
 
                 Button {
+                    NSApplication.shared.activate(ignoringOtherApps: true)
+                    openSettings()
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Settings (⌘,)")
+
+                Button {
                     NSApplication.shared.terminate(nil)
                 } label: {
                     Text("Quit")
@@ -158,9 +196,30 @@ struct MenuBarPopoverView: View {
             .padding(.vertical, 9)
         }
         .frame(width: 320)
+        .fixedSize(horizontal: false, vertical: true)
         .onAppear {
             store.refreshClock()
         }
+    }
+
+    private var taskRowsStack: some View {
+        VStack(spacing: 6) {
+            ForEach(filteredTasks) { task in
+                MenuBarTaskRow(
+                    task: task,
+                    count: store.currentCount(for: task),
+                    progress: store.progress(for: task),
+                    isGoalMet: store.isGoalMet(for: task),
+                    onTap: {
+                        store.tap(taskID: task.id)
+                    },
+                    onDecrement: {
+                        store.decrement(taskID: task.id)
+                    }
+                )
+            }
+        }
+        .padding(10)
     }
 
     private var quickAddForm: some View {
@@ -322,6 +381,7 @@ private struct MenuBarTaskRow: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .fixedSize(horizontal: true, vertical: false)
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 7)

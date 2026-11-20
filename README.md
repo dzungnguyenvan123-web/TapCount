@@ -10,6 +10,7 @@ A lightweight, native macOS click-counter app for tracking daily habits and recu
 - **Mistake-Safe Controls**: Decrement (`-1`) or **Undo (`⌘Z`)** accidental taps, resets, or deletions.
 - **History & Statistics**: Built-in inspector with 14-day and 8-week bar charts, streaks, 7-day averages, all-time totals, and a timestamped tap log.
 - **Customizable Tasks**: Pick from 12 colors and 32 SF Symbols for each task.
+- **Launch at Login**: Optional macOS startup toggle in Settings (`⌘,`) powered by `SMAppService`.
 - **Local Persistence**: Automatically saved to `~/Library/Application Support/TapCount/store.json`.
 
 ## Build, Test & Run
@@ -32,3 +33,4 @@ swift test
 - `⌘N` — Create a new task
 - `⌘Z` — Undo the last tap, decrement, reset, or deletion
 - `⌘I` — Toggle the History & Stats Inspector
+- `⌘,` — Open Settings (Launch at Login, Menu Bar badge, Data folder)

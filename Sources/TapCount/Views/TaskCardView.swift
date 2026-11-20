@@ -145,6 +145,7 @@ struct TaskCardView: View {
                     radius: isHovered ? 10 : 4,
                     y: isHovered ? 4 : 2
                 )
+                .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
             .buttonStyle(.plain)
             .scaleEffect(tapPulse ? 0.97 : 1.0)

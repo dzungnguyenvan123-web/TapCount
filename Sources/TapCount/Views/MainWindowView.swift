@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import TapCountCore
 
@@ -26,6 +27,7 @@ struct MainWindowView: View {
     let store: TaskStore
     @Bindable var uiState: AppUIState
 
+    @Environment(\.openSettings) private var openSettings
     @State private var cadenceFilter: CadenceFilter = .all
     @State private var searchText: String = ""
 
@@ -246,6 +248,14 @@ struct MainWindowView: View {
                     Label("History", systemImage: "sidebar.right")
                 }
                 .help("Toggle History Inspector (⌘I)")
+
+                Button {
+                    NSApplication.shared.activate(ignoringOtherApps: true)
+                    openSettings()
+                } label: {
+                    Label("Settings", systemImage: "gearshape")
+                }
+                .help("Settings (⌘,)")
             }
         }
         .inspector(isPresented: $uiState.showInspector) {
